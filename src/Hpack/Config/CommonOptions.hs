@@ -26,6 +26,23 @@ data CaptureUnknownFields a = CaptureUnknownFields {
 , captureUnknownFieldsValue :: a
 } deriving (Eq, Show, Generic)
 
+instance HasFieldNames a => HasFieldNames (Section a) where
+  fieldNames Proxy = fieldNames (Proxy :: Proxy a) ++ fieldNames (Proxy :: Proxy CommonOptions)
+  ignoreUnderscoredUnknownFields _ = ignoreUnderscoredUnknownFields (Proxy :: Proxy a)
+
+instance (HasFieldNames a, FromJSON a) => FromJSON (CaptureUnknownFields (Section a)) where
+  parseJSON v = do
+    (unknownFields, sect) <- toSection <$> parseJSON v <*> parseJSON v
+    return (CaptureUnknownFields (unknownSectionFields ++ unknownFields) sect)
+    where
+      unknownSectionFields = getUnknownFields v (Proxy :: Proxy (Section a))
+
+instance FromJSON (CaptureUnknownFields CustomSetupSection) where
+  parseJSON = captureUnknownFields
+
+instance FromJSON (CaptureUnknownFields FlagSection) where
+  parseJSON = captureUnknownFields
+
 
 data Empty = Empty
   deriving (Eq, Show)
@@ -62,6 +79,47 @@ instance FromJSON Condition where
 instance HasFieldNames Condition
 
 
+data CommonOptions = CommonOptions {
+  commonOptionsSourceDirs         :: Maybe (List FilePath)
+, commonOptionsDependencies       :: Maybe (List Dependency)
+, commonOptionsDefaultExtensions  :: Maybe (List String)
+, commonOptionsOtherExtensions    :: Maybe (List String)
+, commonOptionsGhcOptions         :: Maybe (List GhcOption)
+, commonOptionsGhcProfOptions     :: Maybe (List GhcProfOption)
+, commonOptionsGhcjsOptions       :: Maybe (List GhcjsOption)
+, commonOptionsCppOptions         :: Maybe (List CppOption)
+, commonOptionsCcOptions          :: Maybe (List CcOption)
+, commonOptionsCSources           :: Maybe (List FilePath)
+, commonOptionsJsSources          :: Maybe (List FilePath)
+, commonOptionsExtraLibDirs       :: Maybe (List FilePath)
+, commonOptionsExtraLibraries     :: Maybe (List FilePath)
+, commonOptionsIncludeDirs        :: Maybe (List FilePath)
+, commonOptionsInstallIncludes    :: Maybe (List FilePath)
+, commonOptionsLdOptions          :: Maybe (List LdOption)
+, commonOptionsBuildable          :: Maybe Bool
+, commonOptionsWhen               :: Maybe (List ConditionalSection)
+, commonOptionsBuildTools         :: Maybe (List Dependency)
+} deriving (Eq, Show, Generic)
+
+instance HasFieldNames CommonOptions
+
+instance FromJSON CommonOptions where
+  parseJSON = genericParseJSON_
+
+
+data ConditionalSection = ThenElseConditional (CaptureUnknownFields ThenElse) | FlatConditional (CaptureUnknownFields (Section Condition))
+  deriving (Eq, Show)
+
+instance FromJSON ConditionalSection where
+  parseJSON v
+    | hasKey "then" v || hasKey "else" v = ThenElseConditional <$> parseJSON v
+    | otherwise = FlatConditional <$> parseJSON v
+
+
+hasKey :: Text -> Value -> Bool
+hasKey key (Object o) = HashMap.member key o
+hasKey _ _ = False
+
 getUnknownFields :: forall a. HasFieldNames a => Value -> Proxy a -> [FieldName]
 getUnknownFields v _ = case v of
   Object o -> ignoreUnderscored unknown
@@ -90,84 +148,28 @@ toSection a CommonOptions{..}
   = ( concat unknownFields
     , Section {
         sectionData = a
-      , sectionSourceDirs = fromMaybeList commonOptionsSourceDirs
-      , sectionDefaultExtensions = fromMaybeList commonOptionsDefaultExtensions
-      , sectionOtherExtensions = fromMaybeList commonOptionsOtherExtensions
-      , sectionGhcOptions = fromMaybeList commonOptionsGhcOptions
-      , sectionGhcProfOptions = fromMaybeList commonOptionsGhcProfOptions
-      , sectionGhcjsOptions = fromMaybeList commonOptionsGhcjsOptions
-      , sectionCppOptions = fromMaybeList commonOptionsCppOptions
-      , sectionCcOptions = fromMaybeList commonOptionsCcOptions
-      , sectionCSources = fromMaybeList commonOptionsCSources
-      , sectionJsSources = fromMaybeList commonOptionsJsSources
-      , sectionExtraLibDirs = fromMaybeList commonOptionsExtraLibDirs
-      , sectionExtraLibraries = fromMaybeList commonOptionsExtraLibraries
-      , sectionIncludeDirs = fromMaybeList commonOptionsIncludeDirs
-      , sectionInstallIncludes = fromMaybeList commonOptionsInstallIncludes
-      , sectionLdOptions = fromMaybeList commonOptionsLdOptions
-      , sectionBuildable = commonOptionsBuildable
-      , sectionDependencies = fromMaybeList commonOptionsDependencies
-      , sectionConditionals = conditionals
-      , sectionBuildTools = fromMaybeList commonOptionsBuildTools
+      , sectionSourceDirs         = fromMaybeList commonOptionsSourceDirs
+      , sectionDefaultExtensions  = fromMaybeList commonOptionsDefaultExtensions
+      , sectionOtherExtensions    = fromMaybeList commonOptionsOtherExtensions
+      , sectionGhcOptions         = fromMaybeList commonOptionsGhcOptions
+      , sectionGhcProfOptions     = fromMaybeList commonOptionsGhcProfOptions
+      , sectionGhcjsOptions       = fromMaybeList commonOptionsGhcjsOptions
+      , sectionCppOptions         = fromMaybeList commonOptionsCppOptions
+      , sectionCcOptions          = fromMaybeList commonOptionsCcOptions
+      , sectionCSources           = fromMaybeList commonOptionsCSources
+      , sectionJsSources          = fromMaybeList commonOptionsJsSources
+      , sectionExtraLibDirs       = fromMaybeList commonOptionsExtraLibDirs
+      , sectionExtraLibraries     = fromMaybeList commonOptionsExtraLibraries
+      , sectionIncludeDirs        = fromMaybeList commonOptionsIncludeDirs
+      , sectionInstallIncludes    = fromMaybeList commonOptionsInstallIncludes
+      , sectionLdOptions          = fromMaybeList commonOptionsLdOptions
+      , sectionBuildable          = commonOptionsBuildable
+      , sectionDependencies       = fromMaybeList commonOptionsDependencies
+      , sectionConditionals       = conditionals
+      , sectionBuildTools         = fromMaybeList commonOptionsBuildTools
       }
     )
   where
     (unknownFields, conditionals) = unzip (map toConditional $ fromMaybeList commonOptionsWhen)
     fromMaybeList :: Maybe (List a) -> [a]
     fromMaybeList = maybe [] fromList
-
-instance HasFieldNames a => HasFieldNames (Section a) where
-  fieldNames Proxy = fieldNames (Proxy :: Proxy a) ++ fieldNames (Proxy :: Proxy CommonOptions)
-  ignoreUnderscoredUnknownFields _ = ignoreUnderscoredUnknownFields (Proxy :: Proxy a)
-
-instance (HasFieldNames a, FromJSON a) => FromJSON (CaptureUnknownFields (Section a)) where
-  parseJSON v = do
-    (unknownFields, sect) <- toSection <$> parseJSON v <*> parseJSON v
-    return (CaptureUnknownFields (unknownSectionFields ++ unknownFields) sect)
-    where
-      unknownSectionFields = getUnknownFields v (Proxy :: Proxy (Section a))
-
-instance FromJSON (CaptureUnknownFields CustomSetupSection) where
-  parseJSON = captureUnknownFields
-
-instance FromJSON (CaptureUnknownFields FlagSection) where
-  parseJSON = captureUnknownFields
-
-data ConditionalSection = ThenElseConditional (CaptureUnknownFields ThenElse) | FlatConditional (CaptureUnknownFields (Section Condition))
-  deriving (Eq, Show)
-
-instance FromJSON ConditionalSection where
-  parseJSON v
-    | hasKey "then" v || hasKey "else" v = ThenElseConditional <$> parseJSON v
-    | otherwise = FlatConditional <$> parseJSON v
-
-hasKey :: Text -> Value -> Bool
-hasKey key (Object o) = HashMap.member key o
-hasKey _ _ = False
-
-data CommonOptions = CommonOptions {
-  commonOptionsSourceDirs         :: Maybe (List FilePath)
-, commonOptionsDependencies       :: Maybe (List Dependency)
-, commonOptionsDefaultExtensions  :: Maybe (List String)
-, commonOptionsOtherExtensions    :: Maybe (List String)
-, commonOptionsGhcOptions         :: Maybe (List GhcOption)
-, commonOptionsGhcProfOptions     :: Maybe (List GhcProfOption)
-, commonOptionsGhcjsOptions       :: Maybe (List GhcjsOption)
-, commonOptionsCppOptions         :: Maybe (List CppOption)
-, commonOptionsCcOptions          :: Maybe (List CcOption)
-, commonOptionsCSources           :: Maybe (List FilePath)
-, commonOptionsJsSources          :: Maybe (List FilePath)
-, commonOptionsExtraLibDirs       :: Maybe (List FilePath)
-, commonOptionsExtraLibraries     :: Maybe (List FilePath)
-, commonOptionsIncludeDirs        :: Maybe (List FilePath)
-, commonOptionsInstallIncludes    :: Maybe (List FilePath)
-, commonOptionsLdOptions          :: Maybe (List LdOption)
-, commonOptionsBuildable          :: Maybe Bool
-, commonOptionsWhen               :: Maybe (List ConditionalSection)
-, commonOptionsBuildTools         :: Maybe (List Dependency)
-} deriving (Eq, Show, Generic)
-
-instance HasFieldNames CommonOptions
-
-instance FromJSON CommonOptions where
-  parseJSON = genericParseJSON_

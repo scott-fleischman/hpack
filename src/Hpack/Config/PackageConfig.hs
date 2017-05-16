@@ -1,15 +1,23 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Hpack.Config.PackageConfig where
 
+import           Control.Monad.Compat
 import           Data.Aeson.Types
 import           Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as Map
+import           Data.String
 import           Data.Text (Text)
+import           GHC.Generics
 import           Hpack.Config.BuildType
 import           Hpack.Config.CommonOptions
+import           Hpack.Config.CustomSetupSection
 import           Hpack.Config.ExecutableSection
 import           Hpack.Config.FlagSection
 import           Hpack.Config.GenericParseJson
 import           Hpack.Config.HasFieldNames
+import           Hpack.Config.LibrarySection
+import           Hpack.Config.Section
 import           Hpack.Util
 
 data PackageConfig = PackageConfig {

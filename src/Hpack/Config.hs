@@ -11,7 +11,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Hpack.Config (
+module Hpack.Config
+(
   packageConfig
 , readPackageConfig
 , renamePackage
@@ -40,7 +41,8 @@ module Hpack.Config (
 , determineModules
 , BuildType(..)
 #endif
-) where
+)
+where
 
 import           Control.Applicative
 import           Control.Monad.Compat
@@ -61,6 +63,23 @@ import           Prelude.Compat
 import           System.Directory
 import           System.FilePath
 
+import           Hpack.Config.AddSource
+import           Hpack.Config.BuildType
+import           Hpack.Config.CommonOptions
+import           Hpack.Config.CustomSetup
+import           Hpack.Config.CustomSetupSection
+import           Hpack.Config.Dependency
+import           Hpack.Config.Executable
+import           Hpack.Config.ExecutableSection
+import           Hpack.Config.Flag
+import           Hpack.Config.FlagSection
+import           Hpack.Config.GitHub
+import           Hpack.Config.HasFieldNames
+import           Hpack.Config.Library
+import           Hpack.Config.LibrarySection
+import           Hpack.Config.PackageConfig
+import           Hpack.Config.Section
+import           Hpack.Config.SourceRepository
 import           Hpack.GenericsUtil
 import           Hpack.Util
 import           Hpack.Yaml
