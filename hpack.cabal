@@ -47,7 +47,6 @@ library
   other-modules:
       Hpack.Config.AddSource
       Hpack.Config.BuildType
-      Hpack.Config.CommonOptions
       Hpack.Config.CustomSetup
       Hpack.Config.CustomSetupSection
       Hpack.Config.Dependency
@@ -134,7 +133,6 @@ test-suite spec
       Hpack.Config
       Hpack.Config.AddSource
       Hpack.Config.BuildType
-      Hpack.Config.CommonOptions
       Hpack.Config.CustomSetup
       Hpack.Config.CustomSetupSection
       Hpack.Config.Dependency

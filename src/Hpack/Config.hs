@@ -46,18 +46,14 @@ where
 
 import           Control.Applicative
 import           Control.Monad.Compat
-import           Data.Aeson.Types
-import           Data.Data
 import           Data.Map.Lazy (Map)
 import qualified Data.Map.Lazy as Map
-import qualified Data.HashMap.Lazy as HashMap
-import           Data.List.Compat (nub, (\\), sortBy, isPrefixOf)
+import           Data.List.Compat (nub, (\\), sortBy)
 import           Data.Maybe
 import           Data.Ord
 import           Data.String
 import           Data.Text (Text)
 import qualified Data.Text as T
-import           GHC.Generics (Generic, Rep)
 import           Prelude ()
 import           Prelude.Compat
 import           System.Directory
@@ -65,7 +61,6 @@ import           System.FilePath
 
 import           Hpack.Config.AddSource
 import           Hpack.Config.BuildType
-import           Hpack.Config.CommonOptions
 import           Hpack.Config.CustomSetup
 import           Hpack.Config.CustomSetupSection
 import           Hpack.Config.Dependency
@@ -80,7 +75,6 @@ import           Hpack.Config.LibrarySection
 import           Hpack.Config.PackageConfig
 import           Hpack.Config.Section
 import           Hpack.Config.SourceRepository
-import           Hpack.GenericsUtil
 import           Hpack.Util
 import           Hpack.Yaml
 
