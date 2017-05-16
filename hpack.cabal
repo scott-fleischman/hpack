@@ -45,6 +45,25 @@ library
       Hpack.Run
       Hpack.Yaml
   other-modules:
+      Hpack.Config.AddSource
+      Hpack.Config.BuildType
+      Hpack.Config.CommonOptions
+      Hpack.Config.CustomSetup
+      Hpack.Config.CustomSetupSection
+      Hpack.Config.Dependency
+      Hpack.Config.Executable
+      Hpack.Config.ExecutableSection
+      Hpack.Config.Flag
+      Hpack.Config.FlagSection
+      Hpack.Config.GenericParseJson
+      Hpack.Config.GitHub
+      Hpack.Config.HasFieldNames
+      Hpack.Config.Hyphenize
+      Hpack.Config.Library
+      Hpack.Config.LibrarySection
+      Hpack.Config.PackageConfig
+      Hpack.Config.Section
+      Hpack.Config.SourceRepository
       Hpack.FormattingHints
       Hpack.GenericsUtil
       Hpack.Haskell
@@ -113,6 +132,25 @@ test-suite spec
       HpackSpec
       Hpack
       Hpack.Config
+      Hpack.Config.AddSource
+      Hpack.Config.BuildType
+      Hpack.Config.CommonOptions
+      Hpack.Config.CustomSetup
+      Hpack.Config.CustomSetupSection
+      Hpack.Config.Dependency
+      Hpack.Config.Executable
+      Hpack.Config.ExecutableSection
+      Hpack.Config.Flag
+      Hpack.Config.FlagSection
+      Hpack.Config.GenericParseJson
+      Hpack.Config.GitHub
+      Hpack.Config.HasFieldNames
+      Hpack.Config.Hyphenize
+      Hpack.Config.Library
+      Hpack.Config.LibrarySection
+      Hpack.Config.PackageConfig
+      Hpack.Config.Section
+      Hpack.Config.SourceRepository
       Hpack.FormattingHints
       Hpack.GenericsUtil
       Hpack.Haskell

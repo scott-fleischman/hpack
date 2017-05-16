@@ -14,6 +14,7 @@ module Hpack.Util (
 , expandGlobs
 , sort
 , lexicographically
+, fromMaybeList
 ) where
 
 import           Prelude ()
@@ -126,3 +127,6 @@ expandGlobs name dir patterns = do
       , pathSepInRanges = False
       , errorRecovery = True
       }
+
+fromMaybeList :: Maybe (List a) -> [a]
+fromMaybeList = maybe [] fromList
