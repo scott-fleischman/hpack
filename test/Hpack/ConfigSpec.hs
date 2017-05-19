@@ -26,7 +26,7 @@ package :: Package
 package = Config.package "foo" "0.0.0"
 
 executable :: String -> String -> Executable
-executable name main_ = Executable name main_ []
+executable name main_ = Executable (Just name) (Just main_) []
 
 library :: Library
 library = Library Nothing [] ["Paths_foo"] []
@@ -152,7 +152,7 @@ spec = do
                 |]
               conditionals = [
                 Conditional "os(windows)"
-                (section ()){sectionDependencies = ["Win32"]}
+                (section Empty){sectionDependencies = ["Win32"]}
                 Nothing
                 ]
           captureUnknownFieldsValue <$> decodeEither input
@@ -185,8 +185,8 @@ spec = do
                   |]
                 conditionals = [
                   Conditional "os(windows)"
-                  (section ()){sectionDependencies = ["Win32"]}
-                  (Just (section ()){sectionDependencies = ["unix"]})
+                  (section Empty){sectionDependencies = ["Win32"]}
+                  (Just (section Empty){sectionDependencies = ["unix"]})
                   ]
                 r :: Either String (Section Empty)
                 r = captureUnknownFieldsValue <$> decodeEither input
@@ -338,8 +338,7 @@ spec = do
             _qux: 66
         |]
         (`shouldBe` [
-          "Ignoring unknown field \"_qux\" in package description"
-        , "Ignoring unknown field \"bar\" in package description"
+          "Ignoring unknown field \"bar\" in package description"
         , "Ignoring unknown field \"baz\" in package description"
         ]
         )
@@ -355,7 +354,6 @@ spec = do
         |]
         (`shouldBe` [
           "Ignoring unknown field \"baz\" in package description"
-        , "Ignoring unknown field \"github\" in package description"
         ]
         )
 
@@ -902,6 +900,32 @@ spec = do
           )
           (packageLibrary >>> (`shouldBe` Just (section library{libraryExposedModules = ["Foo"], libraryOtherModules = ["Bar"]}) {sectionSourceDirs = ["src"]}))
 
+      it "allows to specify exposed-modules in conditional" $ do
+        withPackageConfig [i|
+          library:
+            source-dirs: src
+            exposed-modules: Foo
+            other-modules: []
+            when:
+              condition: os(windows)
+              exposed-modules:
+              - Bar
+          |]
+          (do
+          touch "src/Foo.hs"
+          touch "src/Bar.hs"
+          )
+          (packageLibrary >>> (`shouldBe` Just
+            (section library
+              { libraryExposedModules = ["Foo"]
+              , libraryOtherModules = []
+              })
+              { sectionSourceDirs = ["src"]
+              , sectionConditionals =
+                [ Conditional "os(windows)" (section library{ libraryExposedModules = ["Bar"], libraryOtherModules = [] }) Nothing
+                ]
+              }))
+
       context "when neither exposed-modules nor other-modules are specified" $ do
         it "exposes all modules" $ do
           withPackageConfig [i|
@@ -1134,6 +1158,22 @@ spec = do
           )
           (`shouldBe` package {packageExecutables = [(section $ executable "foo" "driver/Main.hs") {sectionJsSources = ["jsbits/bar.js", "jsbits/foo.js"]}]})
 
+      it "accepts other-modules in conditional" $ do
+        withPackageConfig [i|
+          executables:
+            foo:
+              main: driver/Main.hs
+              other-modules: []
+              when:
+                condition: os(windows)
+                other-modules: Bar
+          |]
+          (do
+          touch "Bar.hs"
+          )
+          (`shouldBe` package {packageExecutables = [(section $ executable "foo" "driver/Main.hs")
+            {sectionConditionals = [Conditional "os(windows)" (section $ Executable Nothing Nothing ["Bar"]) Nothing]}]})
+
     context "when reading test section" $ do
       it "warns on unknown fields" $ do
         withPackageWarnings_ [i|
@@ -1177,6 +1217,22 @@ spec = do
                 - QuickCheck
           |]
           (`shouldBe` package {packageTests = [(section $ executable "spec" "test/Spec.hs") {sectionDependencies = ["hspec", "QuickCheck"]}]})
+
+      it "accepts other-modules in conditional" $ do
+        withPackageConfig [i|
+          tests:
+            spec:
+              main: test/Spec.hs
+              other-modules: []
+              when:
+                condition: os(windows)
+                other-modules: Foo
+          |]
+          (do
+          touch "Foo.hs"
+          )
+          (`shouldBe` package {packageTests = [(section $ executable "spec" "test/Spec.hs")
+            {sectionConditionals = [Conditional "os(windows)" (section $ Executable Nothing Nothing ["Foo"]) Nothing]}]})
 
       context "when both global and section specific dependencies are specified" $ do
         it "combines dependencies" $ do
