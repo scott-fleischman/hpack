@@ -35,7 +35,6 @@ module Hpack.Config (
 , renameDependencies
 , HasFieldNames(..)
 , CaptureUnknownFields(..)
-, Empty(..)
 , getModules
 , determineModules
 , BuildType(..)
@@ -302,15 +301,6 @@ instance HasFieldNames a => HasFieldNames (ThenElse a)
 
 instance (HasFieldNames a, FromJSON a) => FromJSON (ThenElse a) where
   parseJSON = genericParseJSON_
-
-data Empty = Empty
-  deriving (Eq, Show)
-
-instance FromJSON Empty where
-  parseJSON _ = return Empty
-
-instance HasFieldNames Empty where
-  fieldNames _ = []
 
 -- From Cabal the library, copied here to avoid a dependency on Cabal.
 data BuildType
